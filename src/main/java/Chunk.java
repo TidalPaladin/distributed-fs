@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
 
-public class Chunk {
+public class Chunk implements Comparable<Chunk> {
 
 	/* Maximum chunk size */
 	public static final int SIZE = 4096;
@@ -16,6 +16,15 @@ public class Chunk {
 
 	public Chunk(File file) {
 		this.file = file;
+	}
+
+	/**
+		* Checks if the file associated with this chunk exists on the filesystem.
+		*
+		* @return 	True if this.getFile().exists(), false otherwise
+		*/
+	public boolean exists() {
+		return file.exists();
 	}
 
 	/**
@@ -112,6 +121,24 @@ public class Chunk {
 			return sb.toString();
 	}
 
+
+	/**
+		* Checks if the given character buffer can be written to the chunk file
+		* at the given offset without exceeding the maximum chunk size.
+		*
+		* @param buf		Buffer of characters to be writen to the chunk.
+		* @param off		Offset at which the data will be written
+		*
+		* @throws IOException	Upon error reading length info from file
+		*
+		* @return True if SIZE >= buf.length + off
+		*
+		*/
+	public boolean canWrite(char[] buf, int off) throws IOException {
+			/* Check write will not exceed chunk size limit */
+			return buf.length + off <= SIZE;
+	}
+
 	/**
 		* Writes data to this chunk at a given offset.
 		*
@@ -126,7 +153,7 @@ public class Chunk {
 		*/
 	public void write(char[] buf, int off) throws IOException {
 			/* Check write will not exceed chunk size limit */
-			if(buf.length >= getFreeSpace()) {
+			if(!canWrite(buf, off)) {
 					String msg = String.format("Writing %i bytes exceeds chunk limit %i", buf.length, SIZE);
 					throw new IOException(msg);
 			}
@@ -135,6 +162,23 @@ public class Chunk {
 			out.write(buf, off, buf.length);
 			out.flush();
 			out.close();
+	}
+
+
+	/**
+		* Generates a file name for the underlying chunk file based on the original file
+		* and the chunk index of thix chunk
+		*
+		* @param file			Parent file that this chunk is partially storing
+		*
+		* @param index		Index of this chunk
+		*
+		* @return A chunk file name of form "original_file%%chunk_index"
+		*
+		*/
+	public static File generateFileName(File file, int index) {
+			String name = String.format("%s%%%d", file.getName(), index);
+			return new File(name);
 	}
 
 	/**
@@ -151,8 +195,32 @@ public class Chunk {
 			write(buf, (int)start);
 	}
 
+	// Returns a trivial string representation of chunk and chunk file
 	@Override
 	public String toString() {
 			return String.format("Chunk(%s)", file);
 	}
+
+	// Compares chunks by comparing the chunk file paths
+	@Override
+	public int compareTo(Chunk other) {
+			return this.file.compareTo(other.file);
+	}
+
+	// Tests chunk equality by testing chunk file equality
+	@Override
+	public boolean equals(Object other) {
+			if(other instanceof Chunk) {
+					Chunk oth = (Chunk) other;
+					return this.file.equals(oth.file);
+			}
+			return false;
+	}
+
+	// Computes hash code using File.hashCode() of the chunk files
+	@Override
+	public int hashCode() {
+			return this.file.hashCode();
+	}
+
 }
