@@ -7,8 +7,8 @@ public class FileMeta {
 	private final Map<File, List<Chunk>> chunks;
 
 	/* Mapping of chunk to list of servers that store that chunk */
-	private final Map<Chunk, Set<String>> servers;
-	private final Map<String, Set<Chunk>> reverseServers;
+	private final Map<Chunk, Set<InetSocketAddress>> servers;
+	private final Map<InetSocketAddress, Set<Chunk>> reverseServers;
 
 	/* Two level map of <Chunk, Server> to last updated timestamp */
 	private final Map<Chunk, String> lastUpdateChunk;
@@ -97,7 +97,7 @@ public class FileMeta {
 		* @return Unordered of server hostnames storing chunk
 		*
 		*/
-	public Set<String> getServers(Chunk chunk) {
+	public Set<InetSocketAddress> getServers(Chunk chunk) {
 			return servers.get(chunk);
 	}
 
@@ -107,7 +107,7 @@ public class FileMeta {
 		* @return Unordered of server hostnames
 		*
 		*/
-	public Set<String> getServers() {
+	public Set<InetSocketAddress> getServers() {
 			return reverseServers.keySet();
 	}
 
@@ -164,7 +164,7 @@ public class FileMeta {
 		* @param server	Server that is storing chunk
 		*
 		*/
-	public void addServer(Chunk chunk, String server) {
+	public void addServer(Chunk chunk, InetSocketAddress server) {
 			Set<String> value = servers.get(chunk);
 			if(value == null) {
 					value = new HashSet<String>();
@@ -184,7 +184,7 @@ public class FileMeta {
 		* @param server	Server that is not storing chunk
 		*
 		*/
-	public void removeServer(Chunk chunk, String server) {
+	public void removeServer(Chunk chunk, InetSocketAddress server) {
 			Set<String> value = servers.get(chunk);
 			if(value == null) {
 					throw new NoSuchElementException(String.format("chunk %s not found", chunk));

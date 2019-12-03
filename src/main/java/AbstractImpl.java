@@ -6,24 +6,21 @@ import java.util.*;
 public abstract class AbstractImpl implements Runnable {
 	protected static final Logger log = LogManager.getLogger("AbstractImpl");
 
-	protected static final int port = 32000;
-	protected static String[] servers, clients;
+	protected static final int
+		PORT = 32000;
+		MAX_APPEND = 1024;
 
 	protected final ServerSocket socket;
 	protected final int id;
-	protected int sendCount, receiveCount;
-
 	private final Thread prodThread, consThread;
 
 	public AbstractImpl(int id) throws IOException {
-		socket = new ServerSocket(port);
+		socket = new ServerSocket(PORT);
 		this.id = id;
 		prodThread = new Thread(new Producer());
 		consThread = new Thread(new Consumer());
 		prodThread.setDaemon(true);
 		consThread.setDaemon(true);
-		sendCount = 0;
-		receiveCount = 0;
 	}
 
 	/* Runnable, starts producer and consumer threads */
@@ -40,7 +37,7 @@ public abstract class AbstractImpl implements Runnable {
 	}
 
 	// Sends a message to the given host
-	public void send(Message msg, String host) throws IOException {
+	public void send(Message msg, InetSocketAddress host) throws IOException {
 		if(msg == null) {
 			throw new IllegalArgumentException("msg should not be null");
 		}
@@ -48,10 +45,9 @@ public abstract class AbstractImpl implements Runnable {
 			throw new IllegalArgumentException("host should not be null");
 		}
 
-		Socket s = new Socket(host, port);
+		Socket s = new Socket(host);
 		msg.send(s);
 		s.close();
-		sendCount++;
 	}
 
 	// Override this method to generate outgoing messages as needed
@@ -81,56 +77,17 @@ public abstract class AbstractImpl implements Runnable {
 					log.error(ex.getMessage(), ex);
 				}
 				finally {
-					try { if(s != null && !s.isClosed()) s.close(); } catch(IOException ex) {}
+					try {
+						if(s != null && !s.isClosed()) s.close();
+					}
+					catch(IOException ex) {}
 				}
 			}
 		}
 	}
 
-	// Called upon receiving any message. Calls the appropriate callback
-	public void onMessage(Message msg) {
-		receiveCount++;
-		if(msg instanceof Request) {
-			onRequest((Request) msg);
-		}
-		else if(msg instanceof Release) {
-			onRelease((Release) msg);
-		}
-		else if(msg instanceof Grant) {
-			onGrant((Grant) msg);
-		}
-		else if(msg instanceof Satisfied) {
-			onSatisfied((Satisfied) msg);
-		}
-	}
-
-	// Assigns the array of server hostnames
-	public static void setServers(String[] hosts) {
-		if(hosts == null) {
-			throw new IllegalArgumentException("hosts must not be null");
-		}
-		servers = hosts;
-	}
-
-	public static void setClients(String[] hosts) {
-		if(hosts == null) {
-			throw new IllegalArgumentException("hosts must not be null");
-		}
-		clients = hosts;
-	}
-
-	// Called upon receiving a REQUEST message
-	protected abstract void onRequest(Request msg);
-
-	// Called upon receiving a RELEASE message
-	protected abstract void onRelease(Release msg);
-
-	// Called upon receiving a GRANT message
-	protected abstract void onGrant(Grant msg);
-
-	// Called upon receiving a SATISFIED message
-	protected abstract void onSatisfied(Satisfied msg);
-
+	// Called upon receiving any message
+	public abstract void onMessage(Message msg);
 
 	// Handles termination, interrupting daemon threads and closing sockets
 	protected void terminate() {
@@ -146,25 +103,4 @@ public abstract class AbstractImpl implements Runnable {
 		}
 		log.trace("Finished termination job");
 	}
-
-	// Prints send and receive counts
-	public void summary() {
-		System.out.println("Total sent: " + sendCount);
-		System.out.println("Total received: " + receiveCount);
-	}
-
-}
-
-// Subclasses for various message types
-class Request extends Message {
-	Request(int id, int dest, long timestamp) { super(id, dest, timestamp); }
-}
-class Grant extends Message {
-	Grant(int id, int dest, long timestamp) { super(id, dest, timestamp); }
-}
-class Release extends Message {
-	Release(int id, int dest, long timestamp) { super(id, dest, timestamp); }
-}
-class Satisfied extends Message {
-	Satisfied(int id, int dest, long timestamp) { super(id, dest, timestamp); }
 }

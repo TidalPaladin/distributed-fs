@@ -12,7 +12,7 @@ public class Chunk implements Comparable<Chunk> {
 	/* Padding character for chunks */
 	public static final char PAD = '\0';
 
-	public final File file;
+	private final File file;
 
 	public Chunk(File file) {
 		this.file = file;

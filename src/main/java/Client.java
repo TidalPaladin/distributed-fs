@@ -6,22 +6,20 @@ import java.util.concurrent.*;
 
 public class Client extends AbstractImpl {
 	private static final Logger log = LogManager.getLogger("Client");
-	private static final Random r = new Random();
 
-	// Index for server 0
-	private static final int S0 = 0;
-
-	// Delay values read from env vars
-	private static final int
-		requestLow = Integer.parseInt(System.getenv("REQ_LOW")),
-		requestHigh = Integer.parseInt(System.getenv("REQ_HIGH")),
-		releaseLow = Integer.parseInt(System.getenv("REL_LOW")),
-		releaseHigh = Integer.parseInt(System.getenv("REL_HIGH"));
-
-	private static final BlockingQueue<Integer> grants = new PriorityBlockingQueue<>();
+	private static final BlockingQueue<InetSocketAddress>
+		grants = new PriorityBlockingQueue<>();
 
 	// Notified whenever S_0 replies to request
 	private static final Object success = new Object();
+
+	// Notified whenever S_0 replies to request
+	private static final Scanner scanner =
+		new Scanner(System.in);
+
+
+	private final InetSocketAddress metaServer;
+	private final Queue<Message> replies = new SynchronousQueue<>();
 
 	/**
 		* Constructs a client identified by a given integer id. Clients
@@ -33,64 +31,9 @@ public class Client extends AbstractImpl {
 		*
 		* @throws IOException	If local socket could not be opened
 		*/
-	public Client(int id) throws IOException{
+	public Client(int id, InetSocketAddress metaServer) throws IOException{
 		super(id);
-		log.info("Request delay: " + requestLow + " to " + requestHigh);
-		log.info("Release delay: " + releaseLow + " to " + releaseHigh);
-	}
-
-	/**
-	 * Selects a random quorum of servers
-	 *
-	 * @param root	The subscript of the server that is the root node
-	 * 												of the binary tree. E.g. root=2 for the subtree rooted
-	 * 												at S_2.
-	 * 												pre: Must be on the interval [1, 7]
-	 *
-	 * @param seed	Random seed value for quorum selection. A new seed will be
-	 * 												generated for recursive getQuorum calls.
-	 *													post: this.r will have a changed seed state
-	 *
-	 * @return 	The set of server indices representing the selected quorum.
-	 * 									I.e {1, 3, 5} for a quorum of servers 1, 3, and 5
-	 */
-	private static Set<Integer> getQuorum(int root, long seed) {
-		if(root <= 0 || root > 7) {
-			throw new IllegalArgumentException("must have 0 < root <= 7");
-		}
-
-		// Case iv - leaf node; return a quorum of just this node
-		final boolean isLeaf = 2 * root >= servers.length;
-		if(isLeaf) {
-			Set<Integer> result = new HashSet<>();
-			result.add(root);
-			return result;
-		}
-
-		// Choose random case i-iii and a new seed for recursion
-		Set<Integer> result = null;
-		r.setSeed(seed);
-		long newSeed = r.nextLong();
-		switch(r.nextInt(3)+1) {
-			// Root + left subtree
-			case 1:
-				result = getQuorum(2*root, newSeed);
-				result.add(root);
-				break;
-
-			// Root + right subtree
-			case 2:
-				result = getQuorum(2*root+1, newSeed);
-				result.add(root);
-				break;
-
-			// left + right subtrees
-			case 3:
-				result = getQuorum(2*root, newSeed);
-				result.addAll(getQuorum(2*root+1, newSeed));
-				break;
-		}
-		return result;
+		this.metaServer = metaServer;
 	}
 
 	// Sends the 20 requests
@@ -180,44 +123,96 @@ public class Client extends AbstractImpl {
 		terminate();
 	}
 
-	// Noop, clients dont get requests
-	public void onRequest(Request msg){
-		log.warn("Got request message, nothing to do");
+	public void menu() {
+		for(;;) {
+			System.out.println("\n");
+			System.out.println("Usage:");
+			System.out.println("create <filename>");
+			System.out.println("read <filename>");
+			System.out.println("append <filename> <content>");
+			System.out.print("> ");
+			scanner.reset();
+
+			try {
+				String cmd = scanner.next();
+
+				if(!scanner.hasNext()) {
+					throw new IllegalArgumentException("incorrect usage");
+				}
+				File file = new File(scanner.next());
+
+				String payload = null;
+				if(cmd.equalsIgnoreCase("append")) {
+					if(!scanner.hasNextLine()) {
+						throw new IllegalArgumentException("incorrect usage");
+					}
+					payload = scanner.nextLine();
+					if(payload.length() > MAX_APPEND) {
+						String msg = "append len must be <= " + MAX_APPEND;
+						throw new IllegalArgumentException(msg);
+					}
+				}
+				String result = makeRequest(smd, file, payload);
+				System.out.println();
+				System.out.print("Result:\n" + result);
+			}
+			catch (Exception ex) {
+				System.out.println(ex.getMessage());
+			}
+		}
 	}
 
-	// Noop, clients dont get release
-	public void onRelease(Release msg){
-		log.warn("Got release message, nothing to do");
+	public String makeRequest(String cmd, File file, String payload) {
+		if(cmd.equalsIgnoreCase("create")) {
+			Create msg = new Create(id, 0, System.nanoTime(), file);
+			send(msg, metaServer);
+			Message reply = replies.take();
+			if(reply instanceof Create) {
+				return "Created " + file;
+			}
+			else {
+				return "Error creating " + file;
+			}
+		}
+		else if(cmd.equalsIgnoreCase("read")) {
+			Locate locateReq = new Locate(id, 0, System.nanoTime(), file);
+			send(msg, metaServer);
+			Message reply = replies.take();
+			if(reply instanceof Unavailable) {
+				return "Chunks for file " + file + " are unavailable";
+			}
+
+			Map<Chunk, Set<InetSocketAddress>> locations =
+				((Locate) reply).getLocations();
+
+			StringBuilder sb = new StringBuilder();
+			for(Chunk chunk : locations.keySet()) {
+				InetSocketAddress server = locations.get(chunk).iterator().next();
+				Read msg = new Read(id, 0, System.nanoTime(), file);
+
+
+			}
+
+
+
+
+				/* Wait for all GRANTS from quorum */
+				Set<Integer> grants = new HashSet<>();
+				while(grants.size() < quorum.size()) {
+					grants.add(Client.grants.take());
+					log.trace("Have quorum replies: " + grants);
+					log.trace("Need: " + quorum);
+				}
+				log.debug("Received GRANT from all severs");
+		}
+		else if(cmd.equalsIgnoreCase("append")) {
+			Append msg = new Read(id, 0, System.nanoTime(), file, payload);
+			send(msg, metaServer);
+		}
 	}
 
-	// Notify waiting thread of a new grant
-	public void onGrant(Grant msg){
-		log.trace("Got grant message");
-		try {
-			grants.put(msg.origin);
-		}
-		catch(InterruptedException ex) {
-			log.error(ex);
-		}
-	}
-
-	// Notify waiting thread we received result from S_0
-	public void onSatisfied(Satisfied msg){
-		log.trace("Got satisfied message");
-		synchronized(success){
-			success.notify();
-		}
-	}
-
-	// Sleeps a random number of seconds on the interval [low, high]
-	private void sleep(int low, int high){
-		int sleep = r.nextInt(high - low +1) + low;
-		log.info("Sleeping " + sleep + "s");
-		try {
-			Thread.sleep(sleep*1000);
-		}
-		catch(InterruptedException ex) {
-			log.debug("Interrupted while sleeping");
-		}
+	@Override
+	public void onMessage(Message msg) {
+		replies.put(msg);
 	}
 }
