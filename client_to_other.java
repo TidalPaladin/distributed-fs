@@ -1,12 +1,12 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.*;
 
 public class client_to_other{
-	private client clntobj;
-	private Socket socketconnected;
-	private String number;
-	private String type;
+	client clntobj;
+	Socket socketconnected;
+	String number;
+	String type;
 	Scanner clnttermin;
 	DataInputStream frm_otertoclnt;
 	DataOutputStream to_oterfrmclnt;
@@ -33,7 +33,22 @@ public class client_to_other{
 		try{
 			String strline;
 			strline = clntin.readUTF();
-			
+			switch(strline){
+			case "RSERLIST":{
+				String filename = clntin.readUTF();
+				List<String> serlist = new ArrayList<>();
+				String inpread = clntin.readUTF();
+				while (inpread.equals("OVER")){
+					serlist.add(inpread);
+					inpread = clntin.readUTF();
+				}
+				objclnt.readtoser(serlist,filename);
+			}
+			case "READDATA":{
+				String rdata = clntin.readUTF();
+				System.out.println(rdata);
+			}
+			}
 		}
 		catch(Exception e){e.printStackTrace();}
 		return true;
@@ -47,13 +62,20 @@ public class client_to_other{
 		}
 		catch(Exception e){e.printStackTrace();}
 	}
-	public synchronized void sendreadreq(String filename, String offset){
+	public synchronized void sendreadreq(String filename){
 		try{
 			System.out.println("Inside sendreadreq");
 			this.to_oterfrmclnt.writeUTF("RREQ");
 			this.to_oterfrmclnt.writeUTF(filename);
-			this.to_oterfrmclnt.writeUTF(offset);
 		}
 		catch(Exception e){e.printStackTrace();}
 	}
+	public synchronized void readreqtoser(String filename){
+		try{
+			System.out.println("Inside readreqtoser");
+			this.to_oterfrmclnt.writeUTF("READREQ");
+			this.to_oterfrmclnt.writeUTF(filename);
+		}
+		catch(Exception e){e.printStackTrace();}
+	} 
 }

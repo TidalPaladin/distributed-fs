@@ -10,6 +10,7 @@ public class server{
 	List<Node> ser_metaservernode = new ArrayList<>();
 	List<Socket> serconnectedsocks = new ArrayList<Socket>();
 	List<server_to_other> serconnections = new ArrayList<server_to_other>();
+	List<String> filepresent = new ArrayList<String>();
 	HashMap<String,Socket> ser_socket_map = new HashMap<>(); //this has client sockets
 	HashMap<String,server_to_other> ser_channel_map = new HashMap<>();// this has channel of all client to servers
 	public server(String num)
@@ -51,6 +52,7 @@ public class server{
 		fname.append(".txt");
 		File createdfile = new File(fname.toString());
 		String createdfname = fname.toString();
+		this.filepresent.add(filename);
 		return createdfname;
 	} 
 	
@@ -59,8 +61,12 @@ public class server{
         wrtr.append(inpdata);
         wrtr.close();
     }
-	
-	
+	public synchronized String readfile(String filename) throws IOException{
+		BufferedReader reader = new BufferedReader(new FileReader(filename));
+		String returndata = reader.toString();
+		reader.close();
+		return returndata;
+	}
 	private void ssoccreation(server curr)
 	{	try
 		{	

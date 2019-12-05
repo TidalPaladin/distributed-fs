@@ -57,7 +57,7 @@ public class metaserver{
 		System.out.println("Inside selreplicaser");
 		filemap fileobj = new filemap(filename);
 		this.fileobjlist.add(fileobj);
-		List<meta_to_other> replicaserver = new ArrayList<>();
+		Set<meta_to_other> replicaserver = new HashSet<>();
 		StringBuilder chunkname = new StringBuilder();
 		chunkname.append(filename);
 		chunkname.append("_");
@@ -70,7 +70,7 @@ public class metaserver{
 		Set<Integer> generated = new LinkedHashSet<Integer>();
 		while (generated.size() < numneed)
 		{
-		    Integer next = rng.nextInt(max);
+		    int next = rng.nextInt(max);
 		    generated.add(next);
 		}
 		for(int i=0; i < generated.size();i++){
@@ -78,17 +78,37 @@ public class metaserver{
 			mserchannel.sendcreatechunkreq(cname,inpdata);
 			replicaserver.add(mserchannel);			
 		}
-		fileobj.replicasermap.put(cname, replicaserver);		
+		fileobj.replicasermap.put(cname, replicaserver);	
+		this.updateserlist(fileobj.replicasermap);
 	}
-	public synchronized void selchkser(String filename, String offset){
+	public synchronized void updateserlist(HashMap<String,Set<meta_to_other>> servermap){
+		
+	}
+	public synchronized void updatelist(List<String> filelist){
+		
+	}
+	public synchronized List<String> selchkser(String filename){
 		int i = 0;
-		Boolean temp = true;
 		while(i < this.fileobjlist.size()){
 			if(this.fileobjlist.get(i).filename.equals(filename)){
-				Integer filesnum = this.fileobjlist.get(i).file_chunks.size();
-				Integer reqfiles = Integer.getInteger(offset) % 4096;
+				break;
 			}
+			i = i+1;
 		}
+		filemap fileobj = this.fileobjlist.get(i);
+		int temp = fileobj.replicasermap.size();
+		List<meta_to_other> templist = new ArrayList<>();
+		List<String> returnlist = new ArrayList<>();
+		for(int j=0; j<temp; j++){
+			templist = fileobj.replicasermap.get(fileobj.file_chunks.get(i));
+			StringBuilder sernumstr = new StringBuilder();
+			for(int k=0; k<templist.size();k++){
+				String value = templist.get(k).metaser.num;
+				sernumstr.append(value);
+			}
+			returnlist.add(sernumstr.toString());
+		}
+		return returnlist;
 	}
 	private void mssoccreation(metaserver mser){
 		try{	

@@ -17,14 +17,26 @@ public class server_to_other{
 			to_oterfrmser = new DataOutputStream(servsoc.getOutputStream());
 		}
 		catch(Exception e){e.printStackTrace();}
-		Thread clnttooter = new Thread(){
+		Thread sertooter = new Thread(){
 			public void run(){
-				System.out.println("Inside ctosthread run");
+				System.out.println("Inside sertooterthread run");
 				while (cmdxfer(sertermin,frm_otertoser,to_oterfrmser,servobj)){}				
 			}
 		};
-		clnttooter.setDaemon(true);
-		clnttooter.start();
+		sertooter.setDaemon(true);
+		sertooter.start();
+		while(true){
+			try{
+				this.to_oterfrmser.writeUTF("HEARTBEAT");
+				int temp = this.servobj.filepresent.size();
+				for(int i=0; i<temp; i++){
+					String fname = this.servobj.filepresent.get(i);
+					this.to_oterfrmser.writeUTF(fname);
+				}
+				this.to_oterfrmser.writeUTF("END");
+			}
+			catch(Exception e){e.printStackTrace();}
+		}
 	}
 	public boolean cmdxfer(Scanner termin, DataInputStream serin, DataOutputStream serout, server servobj){
 		try{
@@ -41,6 +53,12 @@ public class server_to_other{
 				servobj.writetofile(filename, inputdata);
 				serout.writeUTF("CHKCRETD");
 				serout.writeUTF(servobj.ser_num);
+			}
+			case "READREQ":{
+				String filename = serin.readUTF();
+				String dataread = servobj.readfile(filename);
+				serout.writeUTF("READDATA");
+				serout.writeUTF(dataread);
 			}
 			}
 		}

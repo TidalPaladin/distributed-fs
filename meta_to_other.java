@@ -1,15 +1,14 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
-import java.util.Scanner;
+import java.util.*;
 
 public class meta_to_other{
-	private metaserver metaser;
-	private Socket sersock;
-	private String sernum;
-	private String type;
+	metaserver metaser;
+	Socket sersock;
+	String sernum;
+	String type;
 	Scanner termin;
+	int tickker;
 	DataInputStream frm_otertometa;
 	DataOutputStream to_oterfrmmeta;
 	public meta_to_other(metaserver metaser, Socket sersock, String sernum,String type){
@@ -31,6 +30,7 @@ public class meta_to_other{
 		};
 		msertooter.setDaemon(true);
 		msertooter.start();
+		while(true){}
 	}
 	public boolean cmdxfer(Scanner termin,DataInputStream input,DataOutputStream output, metaserver mser){
 		try{  	
@@ -49,9 +49,26 @@ public class meta_to_other{
 		  		}
 		  	case "RREQ":{
 		  		String filename = input.readUTF();
-		  		String offset = input.readUTF();
-		  		mser.selchkser(filename,offset);
+		  		List<String> serlist = mser.selchkser(filename);
+		  		int temp = serlist.size();
+		  		output.writeUTF("RSERLIST");
+		  		output.writeUTF(filename);
+		  		for(int i=0; i<temp; i++){
+		  			output.writeUTF(serlist.get(temp));
 		  		}
+		  		output.writeUTF("OVER");
+		  		}
+		  	case "HEARTBEAT" :{
+		  		String filenum = input.readUTF();
+		  		String fname;
+		  		List<String> filelist = new ArrayList<>();
+		  		fname = input.readUTF();
+		  		while(! fname.equals("END")){
+		  			filelist.add(fname);
+		  			fname = input.readUTF();
+		  		}
+		  		mser.updatelist(filelist);
+		  	}
 		  	}	  	
 		}
 		catch(Exception e){e.printStackTrace();}

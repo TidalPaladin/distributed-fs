@@ -47,8 +47,11 @@ public class client{
         	}
         	else if(line.equals("READ")){
         		String fname = inpcmd.nextLine();
-        		String offset = inpcmd.nextLine();
-        		curr.clientconnections.get(0).sendreadreq(fname,offset);
+        		curr.clientconnections.get(0).sendreadreq(fname);
+        	}
+        	else if(line.equals("append")){
+        		String fname = inpcmd.nextLine();
+
         	}
         }
         public void run()
@@ -56,6 +59,19 @@ public class client{
         	while(true){termcmd(termin);}
         }
     }
+	public synchronized void readtoser(List<String> serlist, String filename){
+		List<char[]> reqlist = new ArrayList<>();
+		for(int i=0;i<serlist.size();i++){
+			char[] templist = serlist.get(i).toCharArray();
+			reqlist.add(templist);
+		}
+		int reqsernum;
+		for(int i=0;i<reqlist.size();i++){
+			reqsernum = Character.getNumericValue(reqlist.get(i)[0]);
+			client_to_other reqser = this.ser_channel_map.get(Integer.toString(reqsernum));
+			reqser.readreqtoser(filename);
+		}
+	}
 	private void csoccreation(client curr)
 	{	try
 		{	
