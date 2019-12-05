@@ -2,78 +2,50 @@ import org.apache.logging.log4j.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public abstract class AbstractImpl implements Runnable {
 	protected static final Logger log = LogManager.getLogger("AbstractImpl");
 
 	protected static final int
-		PORT = 32000;
+		PORT = 32000,
 		MAX_APPEND = 1024;
 
 	protected final ServerSocket socket;
-	protected final int id;
-	private final Thread prodThread, consThread;
+	protected InetSocketAddress returnAddr;
 
-	public AbstractImpl(int id) throws IOException {
+	protected ExecutorService service = Executors.newFixedThreadPool(10);
+
+	public AbstractImpl(InetSocketAddress returnAddr) throws IOException {
 		socket = new ServerSocket(PORT);
-		this.id = id;
-		prodThread = new Thread(new Producer());
-		consThread = new Thread(new Consumer());
-		prodThread.setDaemon(true);
-		consThread.setDaemon(true);
+		this.returnAddr = returnAddr;
 	}
 
-	/* Runnable, starts producer and consumer threads */
 	@Override
 	public void run() {
-		prodThread.start();
-		consThread.start();
-		try {
-			prodThread.join();
-			consThread.join();
-		}
-		catch(InterruptedException ex){
-		}
+	   Future future = service.submit(new SocketThread());
+	   future.get();
 	}
 
-	// Sends a message to the given host
-	public void send(Message msg, InetSocketAddress host) throws IOException {
-		if(msg == null) {
-			throw new IllegalArgumentException("msg should not be null");
-		}
-		else if(host == null){
-			throw new IllegalArgumentException("host should not be null");
-		}
-
-		Socket s = new Socket(host);
-		msg.send(s);
-		s.close();
-	}
-
-	// Override this method to generate outgoing messages as needed
-	protected abstract void consumer();
-
-	private class Consumer implements Runnable {
-		@Override
-		public void run() { consumer(); }
-	}
+	public abstract void onMessage(Socket s);
 
 	// Producer task. Reads messages from socket and runs callbacks
-	private class Producer implements Runnable {
+	private class SocketThread implements Runnable {
 		@Override
 		public void run() {
-			log.debug("Listening for incoming messages");
 			while(!socket.isClosed()) {
 				Socket s = null;
 				try {
 					s = socket.accept();
-					log.trace("Accepted socket connection");
-					Message msg =  Message.receive(s);
-					onMessage(msg);
+					log.debug("Accepted socket connection");
+					onMessage(s);
 				}
 				catch(SocketException ex) {
 				}
-				catch(IOException | ClassNotFoundException ex) {
+				catch(IOException | InterruptedException | ClassNotFoundException ex) {
 					log.error(ex.getMessage(), ex);
 				}
 				finally {
@@ -86,8 +58,29 @@ public abstract class AbstractImpl implements Runnable {
 		}
 	}
 
-	// Called upon receiving any message
-	public abstract void onMessage(Message msg);
+	public String read(File file) throws IOException, InterruptedException {
+		log.info("Started read job");
+		Read job = new Read(file);
+		Request<Create, TreeMap<Chunk, ChunkMeta>> msg = new Request<>(job, metaServer, returnAddr);
+		TreeMap<Chunk, ChunkMeta> locations = msg.send();
+		log.info("Chunks in " + file + ": " + locations.size());
+
+		StringBuilder sb = new StringBuilder();
+		for(Chunk chunk : locations.keySet()) {
+			ChunkMeta meta = locations.get(chunk);
+			InetSocketAddress server = meta.getServers().iterator().next();
+			String payload = read(chunk, server);
+			sb.append(payload);
+		}
+		return sb.toString();
+	}
+
+	public String read(Chunk chunk, InetSocketAddress server) throws IOException, InterruptedException {
+		Request<Read, String> msg = new Message<>(new Read(chunk), server, returnAddr);
+		log.info("Requesting " + chunk);
+		String payload = msg.send();
+		return payload;
+	}
 
 	// Handles termination, interrupting daemon threads and closing sockets
 	protected void terminate() {
@@ -95,8 +88,9 @@ public abstract class AbstractImpl implements Runnable {
 		try {
 			log.info("Closed socket");
 			socket.close();
-			prodThread.interrupt();
-			consThread.interrupt();
+			for(Thread t : threads) {
+				t.interrupt();
+			}
 		}
 		catch(IOException ex) {
 			log.error(ex.getMessage(), ex);
