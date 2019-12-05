@@ -1,0 +1,69 @@
+compose.config.config.find: Using configuration files: ./docker-compose.yml
+docker.utils.config.find_config_file: Trying paths: ['/home/tidal/.docker/config.json', '/home/tidal/.dockercfg']
+docker.utils.config.find_config_file: No config file found
+docker.utils.config.find_config_file: Trying paths: ['/home/tidal/.docker/config.json', '/home/tidal/.dockercfg']
+docker.utils.config.find_config_file: No config file found
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/version HTTP/1.1" 200 840
+compose.cli.command.get_client: docker-compose version 1.24.1, build unknown
+docker-py version: 4.1.0
+CPython version: 3.7.4
+OpenSSL version: OpenSSL 1.1.1d  10 Sep 2019
+compose.cli.command.get_client: Docker base_url: http+docker://localhost
+compose.cli.command.get_client: Docker version: Platform={'Name': ''}, Components=[{'Name': 'Engine', 'Version': '19.03.4-ce', 'Details': {'ApiVersion': '1.40', 'Arch': 'amd64', 'BuildTime': '2019-10-19T04:39:38.000000000+00:00', 'Experimental': 'false', 'GitCommit': '9013bf583a', 'GoVersion': 'go1.13.1', 'KernelVersion': '5.3.11-1-MANJARO', 'MinAPIVersion': '1.12', 'Os': 'linux'}}, {'Name': 'containerd', 'Version': 'v1.3.0.m', 'Details': {'GitCommit': 'd50db0a42053864a270f648048f9a8b4f24eced3.m'}}, {'Name': 'runc', 'Version': '1.0.0-rc9', 'Details': {'GitCommit': 'd736ef14f0288d6993a1845745d6756cfc9ddd5a'}}, {'Name': 'docker-init', 'Version': '0.18.0', 'Details': {'GitCommit': 'fec3683'}}], Version=19.03.4-ce, ApiVersion=1.40, MinAPIVersion=1.12, GitCommit=9013bf583a, GoVersion=go1.13.1, Os=linux, Arch=amd64, KernelVersion=5.3.11-1-MANJARO, BuildTime=2019-10-19T04:39:38.000000000+00:00
+compose.cli.verbose_proxy.proxy_callable: docker inspect_network <- ('distributedfs_static_net')
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/networks/distributedfs_static_net HTTP/1.1" 404 57
+compose.cli.verbose_proxy.proxy_callable: docker info <- ()
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/info HTTP/1.1" 200 None
+compose.cli.verbose_proxy.proxy_callable: docker info -> {'Architecture': 'x86_64',
+ 'BridgeNfIp6tables': True,
+ 'BridgeNfIptables': True,
+ 'CPUSet': True,
+ 'CPUShares': True,
+ 'CgroupDriver': 'cgroupfs',
+ 'ClusterAdvertise': '',
+ 'ClusterStore': '',
+ 'ContainerdCommit': {'Expected': 'd50db0a42053864a270f648048f9a8b4f24eced3.m',
+                      'ID': 'd50db0a42053864a270f648048f9a8b4f24eced3.m'},
+...
+compose.cli.verbose_proxy.proxy_callable: docker inspect_network <- ('distributed-fs_static_net')
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/networks/distributed-fs_static_net HTTP/1.1" 200 431
+compose.cli.verbose_proxy.proxy_callable: docker inspect_network -> {'Attachable': False,
+ 'ConfigFrom': {'Network': ''},
+ 'ConfigOnly': False,
+ 'Containers': {},
+ 'Created': '2019-12-04T09:27:27.375352946-06:00',
+ 'Driver': 'bridge',
+ 'EnableIPv6': False,
+ 'IPAM': {'Config': [{'Subnet': '172.12.0.0/16'}],
+          'Driver': 'default',
+          'Options': None},
+...
+compose.cli.verbose_proxy.proxy_callable: docker containers <- (all=False, filters={'label': ['com.docker.compose.project=distributed-fs', 'com.docker.compose.oneoff=False']})
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/containers/json?limit=-1&all=0&size=0&trunc_cmd=0&filters=%7B%22label%22%3A+%5B%22com.docker.compose.project%3Ddistributed-fs%22%2C+%22com.docker.compose.oneoff%3DFalse%22%5D%7D HTTP/1.1" 200 3
+compose.cli.verbose_proxy.proxy_callable: docker containers -> (list with 0 items)
+compose.cli.verbose_proxy.proxy_callable: docker containers <- (all=False, filters={'label': ['com.docker.compose.project=distributedfs', 'com.docker.compose.oneoff=False']})
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/containers/json?limit=-1&all=0&size=0&trunc_cmd=0&filters=%7B%22label%22%3A+%5B%22com.docker.compose.project%3Ddistributedfs%22%2C+%22com.docker.compose.oneoff%3DFalse%22%5D%7D HTTP/1.1" 200 3
+compose.cli.verbose_proxy.proxy_callable: docker containers -> (list with 0 items)
+compose.cli.verbose_proxy.proxy_callable: docker containers <- (all=True, filters={'label': ['com.docker.compose.project=distributed-fs', 'com.docker.compose.service=client1', 'com.docker.compose.oneoff=False']})
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/containers/json?limit=-1&all=1&size=0&trunc_cmd=0&filters=%7B%22label%22%3A+%5B%22com.docker.compose.project%3Ddistributed-fs%22%2C+%22com.docker.compose.service%3Dclient1%22%2C+%22com.docker.compose.oneoff%3DFalse%22%5D%7D HTTP/1.1" 200 3
+compose.cli.verbose_proxy.proxy_callable: docker containers -> (list with 0 items)
+compose.cli.verbose_proxy.proxy_callable: docker containers <- (all=True, filters={'label': ['com.docker.compose.project=distributedfs', 'com.docker.compose.service=client1', 'com.docker.compose.oneoff=False']})
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/containers/json?limit=-1&all=1&size=0&trunc_cmd=0&filters=%7B%22label%22%3A+%5B%22com.docker.compose.project%3Ddistributedfs%22%2C+%22com.docker.compose.service%3Dclient1%22%2C+%22com.docker.compose.oneoff%3DFalse%22%5D%7D HTTP/1.1" 200 3
+compose.cli.verbose_proxy.proxy_callable: docker containers -> (list with 0 items)
+compose.cli.verbose_proxy.proxy_callable: docker containers <- (all=True, filters={'label': ['com.docker.compose.project=distributed-fs', 'com.docker.compose.service=server1', 'com.docker.compose.oneoff=False']})
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/containers/json?limit=-1&all=1&size=0&trunc_cmd=0&filters=%7B%22label%22%3A+%5B%22com.docker.compose.project%3Ddistributed-fs%22%2C+%22com.docker.compose.service%3Dserver1%22%2C+%22com.docker.compose.oneoff%3DFalse%22%5D%7D HTTP/1.1" 200 3
+compose.cli.verbose_proxy.proxy_callable: docker containers -> (list with 0 items)
+compose.cli.verbose_proxy.proxy_callable: docker containers <- (all=True, filters={'label': ['com.docker.compose.project=distributedfs', 'com.docker.compose.service=server1', 'com.docker.compose.oneoff=False']})
+urllib3.connectionpool._make_request: http://localhost:None "GET /v1.25/containers/json?limit=-1&all=1&size=0&trunc_cmd=0&filters=%7B%22label%22%3A+%5B%22com.docker.compose.project%3Ddistributedfs%22%2C+%22com.docker.compose.service%3Dserver1%22%2C+%22com.docker.compose.oneoff%3DFalse%22%5D%7D HTTP/1.1" 200 3
+compose.cli.verbose_proxy.proxy_callable: docker containers -> (list with 0 items)
+compose.service.build: Building client1
+compose.cli.verbose_proxy.proxy_callable: docker build <- (path='/home/tidal/Documents/distributed-fs', tag='tidalpaladin/hw3', rm=True, forcerm=False, pull=False, nocache=False, dockerfile=None, cache_from=None, labels=None, buildargs={}, network_mode=None, target=None, shmsize=None, extra_hosts=None, container_limits={'memory': None}, gzip=False, isolation=None, platform=None)
+docker.api.build._set_auth_headers: Looking for auth config
+docker.api.build._set_auth_headers: No auth config in memory - loading from filesystem
+docker.utils.config.find_config_file: Trying paths: ['/home/tidal/.docker/config.json', '/home/tidal/.dockercfg']
+docker.utils.config.find_config_file: No config file found
+docker.api.build._set_auth_headers: Sending auth config ()
+urllib3.connectionpool._make_request: http://localhost:None "POST /v1.25/build?t=tidalpaladin%2Fhw3&q=False&nocache=False&rm=True&forcerm=False&pull=False HTTP/1.1" 200 None
+compose.cli.verbose_proxy.proxy_callable: docker build -> <generator object APIClient._stream_helper at 0x7f2b55a974d0>
+Step 1/7 : FROM tomcat:9.0-jre8-alpine
+compose.cli.main.main: Service 'client1' failed to build: failed to get layer for image sha256:387f9d021d3ae76a2dafd661142a2659939389def2f390d40ab73bd49df242ba: layer does not exist

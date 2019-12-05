@@ -1,0 +1,271 @@
+version: '2'
+
+networks:
+  static_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.10.0.0/16
+
+services:
+
+  fileserver:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.0
+    hostname: server_0
+    environment:
+      - ID=0
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_1:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.1
+    hostname: server_1
+    environment:
+      - ID=1
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_2:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.2
+    hostname: server_2
+    environment:
+      - ID=2
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_3:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.3
+    hostname: server_3
+    environment:
+      - ID=3
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_4:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.4
+    hostname: server_4
+    environment:
+      - ID=4
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_5:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.5
+    hostname: server_5
+    environment:
+      - ID=5
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_6:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.6
+    hostname: server_6
+    environment:
+      - ID=6
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  server_7:
+    image: tidalpaladin/hw2
+    networks:
+      static_net:
+        ipv4_address: 172.10.1.7
+    hostname: server_7
+    environment:
+      - ID=7
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=server
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  client1:
+    image: tidalpaladin/hw2
+    depends_on:
+      - server_1
+      - server_2
+      - server_3
+      - server_4
+      - server_5
+      - server_6
+      - server_7
+    networks:
+      static_net:
+        ipv4_address: 172.10.2.1
+    hostname: client_1
+    environment:
+      - ID=1
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=client
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  client2:
+    image: tidalpaladin/hw2
+    depends_on:
+      - server_1
+      - server_2
+      - server_3
+      - server_4
+      - server_5
+      - server_6
+      - server_7
+    networks:
+      static_net:
+        ipv4_address: 172.10.2.2
+    hostname: client_2
+    environment:
+      - ID=2
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=client
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  client3:
+    image: tidalpaladin/hw2
+    depends_on:
+      - server_1
+      - server_2
+      - server_3
+      - server_4
+      - server_5
+      - server_6
+      - server_7
+    networks:
+      static_net:
+        ipv4_address: 172.10.2.3
+    hostname: client_3
+    environment:
+      - ID=3
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=client
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  client4:
+    image: tidalpaladin/hw2
+    depends_on:
+      - server_1
+      - server_2
+      - server_3
+      - server_4
+      - server_5
+      - server_6
+      - server_7
+    networks:
+      static_net:
+        ipv4_address: 172.10.2.4
+    hostname: client_4
+    environment:
+      - ID=4
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=client
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
+
+  client5:
+    image: tidalpaladin/hw2
+    depends_on:
+      - server_1
+      - server_2
+      - server_3
+      - server_4
+      - server_5
+      - server_6
+      - server_7
+    networks:
+      static_net:
+        ipv4_address: 172.10.2.5
+    hostname: client_5
+    environment:
+      - ID=5
+      - PORT=32000
+      - SERVERS=${SERVERS}
+      - CLIENTS=${CLIENTS}
+      - MODE=client
+      - REL_LOW=${REL_LOW}
+      - REL_HIGH=${REL_HIGH}
+      - REQ_LOW=${REQ_LOW}
+      - REQ_HIGH=${REQ_HIGH}
