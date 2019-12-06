@@ -44,6 +44,7 @@ public class Client extends Node {
 				}
 			}
 			catch(Exception ex) {
+				log.error(ex.getMessage(), ex);
 				result = ex.getMessage();
 			}
 			finally {

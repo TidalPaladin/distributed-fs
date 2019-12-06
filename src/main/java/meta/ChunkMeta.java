@@ -11,7 +11,7 @@ public class ChunkMeta implements Serializable {
 	public ChunkMeta(Chunk chunk) {
 		this.chunk = chunk;
 		this.servers = new HashSet<>();
-		this.available = false;
+		this.available = true;
 	}
 
 	public Chunk getChunk() {
@@ -28,6 +28,12 @@ public class ChunkMeta implements Serializable {
 
 	public void removeServer(InetSocketAddress server) {
 		servers.remove(server);
+	}
+
+	public void setServers(Set<InetSocketAddress> servers) {
+		for(InetSocketAddress server : servers) {
+			addServer(server);
+		}
 	}
 
 	public void markUnavailable() {

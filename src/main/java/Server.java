@@ -48,6 +48,7 @@ public class Server extends Node {
 			else if(j instanceof Create) {
 				Create job = (Create) j;
 				job.call();
+				chunks.add((Chunk) job.target);
 			}
 			else if(j instanceof Replicate) {
 				Replicate job = (Replicate) j;

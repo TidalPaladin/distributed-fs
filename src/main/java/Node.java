@@ -78,20 +78,17 @@ public abstract class Node implements Runnable {
 
 	public boolean append(File file, String payload, InetSocketAddress metaServer) throws IOException, InterruptedException {
 		Append job = new Append(file, payload);
-		Request<Append, Boolean> permissionRequest = new Request<>(job, metaServer);
+		Request<Append, TreeMap<Chunk, ChunkMeta>> permissionRequest = new Request<>(job, metaServer);
 
-		boolean granted = messenger.send(permissionRequest);
-		if(!granted) {
+		TreeMap<Chunk, ChunkMeta> chunks = messenger.send(permissionRequest);
+		if(chunks.isEmpty()) {
 			log.info("Metaserver replied with abort");
 			return false;
 		}
-
 		log.info("Metaserver approved append");
-		TreeMap<Chunk, ChunkMeta> locations = locate(file, metaServer);
-		log.info("Obtained locations of " + locations.size() + " chunks");
 
-		Chunk lastChunk = locations.lastKey();
-		ChunkMeta lastChunkMeta = locations.get(lastChunk);
+		Chunk lastChunk = chunks.lastKey();
+		ChunkMeta lastChunkMeta = chunks.get(lastChunk);
 		log.info("Identified last chunk " + lastChunk);
 		Set<InetSocketAddress> quorum = lastChunkMeta.getServers();
 		Append chunkJob = new Append(lastChunk, payload);
@@ -121,11 +118,11 @@ public abstract class Node implements Runnable {
 	protected boolean phaseOne(Job job, Set<InetSocketAddress> quorum) throws IOException {
 		boolean success = true;
 		for(InetSocketAddress server : quorum) {
-			Request<Job, Boolean> msg = new Request<>(job, server);
+			Request<Job, Job> msg = new Request<>(job, server);
 			log.info("Sending phase 1 of " + job + " to " + server);
-			success = messenger.send(msg);
+			Job reply = messenger.send(msg);
 
-			if(!success) {
+			if(!(reply instanceof Commit)) {
 				log.info("Server " + server + " aborted job " + job);
 				success = false;
 				break;

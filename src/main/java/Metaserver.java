@@ -42,8 +42,6 @@ public class Metaserver extends Node {
 					deadServers.put(addr, server);
 					servers.remove(addr);
 					log.info("Moved  " + addr + " to dead server list");
-
-					// handle down server
 				}
 			}
 			try {
@@ -58,35 +56,131 @@ public class Metaserver extends Node {
 			Message msg = messenger.receive(s);
 			Job j = msg.job;
 			log.info("Got message: " + j.toString());
-
 			if(j instanceof Create) {
 				Create job = (Create) j;
 				if(files.containsKey(job.target)) {
 					messenger.send(s, Boolean.valueOf(false));
 				}
 				else {
+					create(job.target);
 					messenger.send(s, Boolean.valueOf(true));
 				}
 			}
 			else if(j instanceof Locate) {
 				Locate job = (Locate) j;
 				job.setMetadata(chunks, files);
-				TreeMap<Chunk, ChunkMeta> reply = job.call();
+				TreeMap<Chunk, ChunkMeta> reply = locate(job);
 				messenger.send(s, reply);
 			}
 			else if(j instanceof Append) {
 				Append job = (Append) j;
-				File file = job.target;
-				String payload = job.payload;
-
-				FileMeta meta = files.get(file);
-
+				if(!canAppend(job.target)) {
+					log.info("Cannot run job " + job);
+					messenger.send(s, new TreeMap<>());
+				}
+				else {
+					log.info("Sending locations for append request");
+					Locate locate = new Locate(job.target);
+					messenger.send(s, locate(locate));
+				}
 			}
 			else if(j instanceof Heartbeat) {
 				Heartbeat job = (Heartbeat) j;
+				job.setServerList(servers);
+				job.setDeadServerList(deadServers);
+				job.call();
 			}
+			else if(j instanceof Read) {
+				Read job = (Read) j;
+				if(!canRead(job.target)) {
+					log.info("Cannot run job " + job);
+					messenger.send(s, new TreeMap<>());
+				}
+				else {
+					log.info("Sending locations for read request");
+					Locate locate = new Locate(job.target);
+					messenger.send(s, locate(locate));
+				}
+			}
+
 		}
 		catch(IOException | ClassNotFoundException ex) {
+			log.error(ex.getMessage(), ex);
+		}
+	}
+
+
+	private void create(File file) {
+		Chunk firstChunk = new Chunk(file);
+		FileMeta fileMeta = new FileMeta(file);
+		fileMeta.addChunk(firstChunk);
+		files.put(file, fileMeta);
+		create(firstChunk);
+	}
+
+	private void create(Chunk chunk) {
+		ChunkMeta chunkMeta = new ChunkMeta(chunk);
+		Set<InetSocketAddress> servers = getServersForChunk(chunk);
+		chunkMeta.setServers(servers);
+		chunks.put(chunk, chunkMeta);
+
+		Create job = new Create(chunk);
+		log.info("Running " + job + " on servers: " + servers);
+		try {
+			for(InetSocketAddress server : servers) {
+				Message<Create> msg = new Message(job, server);
+				messenger.send(msg);
+			}
+		}
+		catch(IOException ex) {
+			log.error(ex.getMessage(), ex);
+		}
+	}
+
+	private void createNext(Chunk prev) {
+		Chunk nextChunk = new Chunk(prev);
+		create(nextChunk);
+	}
+
+
+	private boolean canAppend(File file) {
+		Locate locate = new Locate(file);
+		TreeMap<Chunk, ChunkMeta> chunkMeta = locate(locate);
+		Chunk lastChunk = chunkMeta.lastKey();
+		return chunkMeta.get(lastChunk).isAvailable();
+	}
+
+	private boolean canRead(File file) {
+		Locate locate = new Locate(file);
+		TreeMap<Chunk, ChunkMeta> chunkMeta = locate(locate);
+		for(ChunkMeta cm : chunkMeta.values()) {
+			if(!cm.isAvailable()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private TreeMap<Chunk, ChunkMeta> locate(Locate job) {
+		job.setMetadata(chunks, files);
+		return job.call();
+	}
+
+	private void replicate(Chunk chunk) {
+		ChunkMeta chunkMeta = chunks.get(chunk);
+		Set<InetSocketAddress> servers = getServersForChunk(chunk);
+		chunkMeta.setServers(servers);
+		chunks.put(chunk, chunkMeta);
+
+		Create job = new Create(chunk);
+		log.info("Running " + job + " on servers: " + servers);
+		try {
+			for(InetSocketAddress server : servers) {
+				Message<Create> msg = new Message(job, server);
+				messenger.send(msg);
+			}
+		}
+		catch(IOException ex) {
 			log.error(ex.getMessage(), ex);
 		}
 	}

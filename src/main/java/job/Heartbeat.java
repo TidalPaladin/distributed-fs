@@ -55,7 +55,8 @@ class Heartbeat extends Job<Void> {
 		}
 		else if(deadServers.containsKey(source)) {
 			log.info("Beginning recovery of dead server");
-			//restore(source);
+			servers.put(source, deadServers.get(source));
+			deadServers.remove(source);
 		}
 		else {
 			log.info("Registered new server " + source);

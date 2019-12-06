@@ -12,7 +12,7 @@ public class ChunkWriter extends FileWriter {
 	private final Chunk chunk;
 
 	public ChunkWriter(Chunk chunk) throws IOException {
-		super(chunk);
+		super(chunk, true);
 		this.chunk = chunk;
 	}
 
