@@ -11,18 +11,29 @@ class Replicate extends Job<Void> {
 
 	public final Chunk target;
 	public final InetSocketAddress serverWithChunk;
+	private Messenger messenger;
 
 	public Replicate(InetSocketAddress serverWithChunk, Chunk target) {
 		this.target = target;
 		this.serverWithChunk = serverWithChunk;
 	}
 
+	public void setMessenger(Messenger messenger) {
+		this.messenger = messenger;
+	}
+
 	@Override
 	public Void call() throws IOException {
-		Request<Read, String> readChunk = new Request<>(0, 0, new Read(target));
-		String chunkContent = readChunk.send(serverWithChunk);
-		Append appendJob = new Append(target, chunkContent);
-		appendJob.run();
+		Request<Read, String> msg = new Request<>(new Read(target), serverWithChunk);
+		String payload = messenger.send(msg);
+		target.createNewFile();
+
+		ChunkWriter cw = new ChunkWriter(target);
+		cw.append(payload);
+		if(target.getPadding() > 0) {
+			cw.pad();
+		}
+		return null;
 	}
 
 }

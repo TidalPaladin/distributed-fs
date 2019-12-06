@@ -16,15 +16,13 @@ class Read<T extends File> extends Job<String> {
 	public String call() throws IOException {
 		if(target.canRead()) {
 			BufferedReader br = new BufferedReader(new FileReader(target));
-			StringBuilder sb = new StringBuilder(target.length());
+			StringBuilder sb = new StringBuilder();
 			while(br.ready()) {
 				sb.append(br.readLine());
 			}
 			br.close();
 			return sb.toString();
 		}
-		else {
-			throw new IOException("Failed to read file");
-		}
+		return null;
 	}
 }

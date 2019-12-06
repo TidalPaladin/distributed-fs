@@ -1,42 +1,17 @@
-import java.io.*;
-import java.net.Socket;
 import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
-import java.net.SocketAddress;
-import java.util.UUID;
 
-public class Request<ReqestT extends Job, ReplyT> extends Message<RequestT> {
+public class Request<I extends Job, O> extends Message<I> {
 
-	@Override
-	public Message<ReplyT> send(InetSocketAddress addr) throws IOException {
-		Socket s = null;
-		ReplyT reply;
-		try {
-			Socket s = new Socket();
-			s.connect(addr);
-			send(s);
+	public Request(I job, InetSocketAddress to, InetSocketAddress from) {
 
-			// Get reply
-			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-			Object replyObj = ois.readObject();
+		super(job, to, from );
+}
 
-			ReplyT reply = (ReplyT) replyObj;
-		}
-		catch(IOException | ClassNotFoundException ex) {
-			throw ex;
-		}
-		finally {
-			ois.close();
-			s.close();
-			return reply;
-		}
+	public Request(I job, InetSocketAddress to) {
+		this(job, to, null);
 	}
 
-	@Override
-	public Message<ReplyT> send() throws IOException {
-		if(sendTo == null) {
-			throw new IllegalStateException("sendTo address was not assigned");
-		}
-		return send(this.sendTo);
+	public Request(Request<I, O> other, InetSocketAddress from) {
+		this(other.job, other.sendTo, from);
 	}
 }

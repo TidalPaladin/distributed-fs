@@ -51,7 +51,7 @@ public class ChunkMeta implements Serializable {
 		return String.format(
 				"ChunkMeta(%s, %d, %s)",
 				chunk.getParentFile(),
-				chunk.getIndex(),
+				chunk.index,
 				getServers()
 		);
 	}

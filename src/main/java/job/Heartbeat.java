@@ -35,8 +35,8 @@ class Heartbeat extends Job<Void> {
 			throw new IllegalStateException("must set server/dead server list");
 		}
 
-		if(servers.containsKey(src)) {
-			ServerMeta serverMeta = servers.get(src);
+		if(servers.containsKey(source)) {
+			ServerMeta serverMeta = servers.get(source);
 			serverMeta.update(this);
 
 			Set<Chunk> newChunks = serverMeta.getNewChunks();
@@ -48,13 +48,14 @@ class Heartbeat extends Job<Void> {
 				log.info("Heartbeat missing chunks: " + missing);
 			}
 		}
-		else if(deadServers.containsKey(src)) {
+		else if(deadServers.containsKey(source)) {
 			log.info("Beginning recovery of dead server");
-			restore(src);
+			//restore(source);
 		}
 		else {
-			log.info("Registered new server " + src);
-			servers.put(src, new ServerMeta(src));
+			log.info("Registered new server " + source);
+			servers.put(source, new ServerMeta(source));
 		}
+		return null;
 	}
 }

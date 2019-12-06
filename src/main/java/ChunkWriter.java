@@ -9,9 +9,11 @@ public class ChunkWriter extends FileWriter {
 
 	/* Padding character for chunks */
 	public static final char PAD = '\0';
+	private final Chunk chunk;
 
-	public ChunkWriter(Chunk chunk) {
+	public ChunkWriter(Chunk chunk) throws IOException {
 		super(chunk);
+		this.chunk = chunk;
 	}
 
 	/**
@@ -39,9 +41,12 @@ public class ChunkWriter extends FileWriter {
 	 *
 	 */
 	public void pad() throws IOException {
-		long padSize = getFreeSpace();
-		String pad = String.join("", Collections.nCopies(pad_size, PAD));
-		append(pad);
+		int padSize = (int) chunk.getFreeSpace();
+		StringBuilder sb = new StringBuilder();
+		for(int i = 0; i < padSize; i++) {
+			sb.append(PAD);
+		}
+		append(sb.toString());
 	}
 }
 

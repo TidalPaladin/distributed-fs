@@ -6,7 +6,7 @@ import java.util.TreeSet;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Callable;
 
-class Locate extends Job<TreeSet<Chunk, ChunkMeta>> {
+class Locate extends Job<TreeMap<Chunk, ChunkMeta>> {
 
 	public final File target;
 
@@ -18,20 +18,24 @@ class Locate extends Job<TreeSet<Chunk, ChunkMeta>> {
 	}
 
 	public void setMetadata(Map<Chunk, ChunkMeta>chunks, Map<File, FileMeta> files) {
-		this.meta = meta;
+		this.chunks = chunks;
+		this.files = files;
 	}
 
 	@Override
-	public TreeSet<Chunk, ChunkMeta> call() {
+	public TreeMap<Chunk, ChunkMeta> call() {
 		if(chunks == null || files == null) {
 			throw new IllegalStateException("must set metadata before calling");
 		}
 
-		FileMeta fileMeta = files.get(file);
+		if(!files.containsKey(target)) {
+			return null;
+		}
+		FileMeta fileMeta = files.get(target);
 		TreeSet<Chunk> chunks = fileMeta.getChunks();
 
 		TreeMap<Chunk, ChunkMeta> result = new TreeMap<>(this.chunks);
-		payload.keySet().retainAll(chunks);
+		result.keySet().retainAll(chunks);
 		return result;
 	}
 }

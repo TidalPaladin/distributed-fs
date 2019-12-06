@@ -5,7 +5,7 @@ import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.util.UUID;
 
-public class Chunk extends File implements Comparable<Chunk> {
+public class Chunk extends File {
 
 	/* Maximum chunk size */
 	public static final int SIZE = 4096;
@@ -18,24 +18,25 @@ public class Chunk extends File implements Comparable<Chunk> {
 	public final File chunkOf;
 	public final int index;
 
-	public Chunk(File chunkOf, File chunkFile, int index) {
-		this.file = chunkFile;
+	public Chunk(File chunkOf, String name, int index) {
+		super(name);
 		this.chunkOf = chunkOf;
 		this.index = index;
 	}
 
-	public Chunk(Chunk predecessor) {
-		this(predecessor.chunkOf, predecessor.file, predecessor.index + 1);
+	public Chunk(Chunk prev) {
+		this(prev.chunkOf, UUID.randomUUID().toString(), prev.index+1);
 	}
 
 	public Chunk(File chunkOf) {
-		this(chunkOf, new File(UUID.randomUUID().toString()), 0);
+		this(chunkOf, UUID.randomUUID().toString(), 0);
 	}
 
 	@Override
 	public long length() {
 		return super.length() - padding;
 	}
+
 
 	/**
 	 * Gets the useable space remaining in this chunk. This
@@ -69,13 +70,19 @@ public class Chunk extends File implements Comparable<Chunk> {
 		return String.format("Chunk(%s, %s)", chunkOf, getName());
 	}
 
+	/*
 	// Compares chunks by comparing top level file name then chunk index
 	@Override
-	public int compareTo(Chunk other) {
-		int chunkDiff = this.chunkOf.compareTo(other.chunkOf);
-		if(chunkDiff != 0) {
-			return chunkDiff;
+	public int compareTo(File other) {
+		if(other instanceof Chunk) {
+			int chunkDiff = this.chunkOf.compareTo(other.chunkOf);
+			if(chunkDiff != 0 && ) {
+				return chunkDiff;
+			}
+			return this.index - other.index;
 		}
-		return this.index - other.index;
+		return super.compareTo(other);
 	}
+	*/
+
 }
