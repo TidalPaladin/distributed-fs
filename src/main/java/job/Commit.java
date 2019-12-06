@@ -11,6 +11,12 @@ class Commit extends Job<Void> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Commit(%s)", job);
+	}
+
+
+	@Override
 	public Void call() {
 		try {
 			job.call();

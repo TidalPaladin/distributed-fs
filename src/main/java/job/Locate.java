@@ -23,6 +23,11 @@ class Locate extends Job<TreeMap<Chunk, ChunkMeta>> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Locate(%s)", target);
+	}
+
+	@Override
 	public TreeMap<Chunk, ChunkMeta> call() {
 		if(chunks == null || files == null) {
 			throw new IllegalStateException("must set metadata before calling");

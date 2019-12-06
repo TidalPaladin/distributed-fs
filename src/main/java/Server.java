@@ -21,9 +21,10 @@ public class Server extends Node {
 
 	@Override
 	public void run() {
+		super.run();
 		while(!socket.isClosed()) {
 			try {
-				log.debug("Sending heartbeat message");
+				log.info("Sending heartbeat message");
 				Message<Heartbeat> msg = new Message(new Heartbeat(returnAddr, chunks), metaServer);
 				messenger.send(msg);
 				Thread.sleep(Metaserver.HEARTBEAT_FREQ * 1000);
@@ -38,6 +39,7 @@ public class Server extends Node {
 		try {
 			Message msg = messenger.receive(s);
 			Job j = msg.job;
+			log.info("Got message: " + j.toString());
 
 			if(j instanceof Commit) {
 				Commit job = (Commit) j;

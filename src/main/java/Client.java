@@ -22,8 +22,9 @@ public class Client extends Node {
 		String result = null;
 		for(;;) {
 			try {
-				Future<Job> choice = service.submit(new Menu());
-				choice.get();
+				Future<Job> f = service.submit(new Menu());
+				Job choice = f.get();
+				log.info("Got job " + choice);
 
 				if(choice instanceof Read) {
 					result = read(((Read) choice).target);

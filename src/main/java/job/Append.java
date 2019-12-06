@@ -14,6 +14,11 @@ class Append<T extends File> extends Job<Void> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Append(%s, %s)", target, payload);
+	}
+
+	@Override
 	public boolean equals(Object other) {
 		if(!(other instanceof Append)) {
 			return false;

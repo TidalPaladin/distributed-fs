@@ -38,6 +38,7 @@ public class Menu implements Callable<Job> {
 			return makeRequest(cmd, file, payload);
 		}
 		catch (Exception ex) {
+			ex.printStackTrace();
 			return null;
 		}
 	}

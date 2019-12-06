@@ -32,6 +32,7 @@ public class Metaserver extends Node {
 
 	@Override
 	public void run() {
+		super.run();
 		while(true) {
 			long currentTime = System.nanoTime();
 			for(InetSocketAddress addr : servers.keySet()) {
@@ -56,14 +57,15 @@ public class Metaserver extends Node {
 		try {
 			Message msg = messenger.receive(s);
 			Job j = msg.job;
+			log.info("Got message: " + j.toString());
 
 			if(j instanceof Create) {
 				Create job = (Create) j;
 				if(files.containsKey(job.target)) {
-					messenger.send(s, false);
+					messenger.send(s, Boolean.valueOf(false));
 				}
 				else {
-					messenger.send(s, true);
+					messenger.send(s, Boolean.valueOf(true));
 				}
 			}
 			else if(j instanceof Locate) {

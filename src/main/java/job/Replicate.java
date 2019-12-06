@@ -23,6 +23,11 @@ class Replicate extends Job<Void> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Replicate(%s, %s)", target, serverWithChunk);
+	}
+
+	@Override
 	public Void call() throws IOException {
 		Request<Read, String> msg = new Request<>(new Read(target), serverWithChunk);
 		String payload = messenger.send(msg);

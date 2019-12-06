@@ -11,6 +11,11 @@ class Abort extends Job<Void> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Abort(%s)", job);
+	}
+
+	@Override
 	public Void call() {
 		return null;
 	}

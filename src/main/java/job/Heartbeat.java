@@ -30,6 +30,11 @@ class Heartbeat extends Job<Void> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Heartbeat(%s, %s)", source, storedChunks);
+	}
+
+	@Override
 	public Void call() {
 		if(servers == null || deadServers == null) {
 			throw new IllegalStateException("must set server/dead server list");

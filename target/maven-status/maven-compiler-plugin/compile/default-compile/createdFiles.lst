@@ -12,7 +12,6 @@ Create.class
 Append.class
 ServerMeta.class
 Replicate.class
-Node$1.class
 Client.class
 ChunkMeta.class
 Read.class

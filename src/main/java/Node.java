@@ -28,18 +28,13 @@ public abstract class Node implements Runnable {
 
 	@Override
 	public void run() {
-	   Future future = service.submit(new SocketThread());
-	   try {
-		   future.get();
-	   }
-	   catch(Exception ex) {
-		}
+	   service.submit(new SocketThread());
 	}
 
 	public abstract void onMessage(Socket s);
 
 	// Producer task. Reads messages from socket and runs callbacks
-	private class SocketThread implements Runnable {
+	protected class SocketThread implements Runnable {
 		@Override
 		public void run() {
 			while(!socket.isClosed()) {
@@ -48,15 +43,10 @@ public abstract class Node implements Runnable {
 					s = socket.accept();
 					log.debug("Accepted socket connection");
 					onMessage(s);
+					s.close();
 				}
 				catch(Exception ex) {
 					log.error(ex.getMessage(), ex);
-				}
-				finally {
-					try {
-						if(s != null && !s.isClosed()) s.close();
-					}
-					catch(IOException ex) {}
 				}
 			}
 		}

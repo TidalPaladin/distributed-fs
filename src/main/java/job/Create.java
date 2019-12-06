@@ -12,6 +12,11 @@ class Create<T extends File> extends Job<Void> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Create(%s)", target);
+	}
+
+	@Override
 	public Void call() throws IOException {
 		if(target instanceof Chunk) {
 			target.createNewFile();

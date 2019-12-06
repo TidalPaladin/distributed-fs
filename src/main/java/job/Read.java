@@ -13,6 +13,11 @@ class Read<T extends File> extends Job<String> {
 	}
 
 	@Override
+	public String toString() {
+		return String.format("Read(%s)", target);
+	}
+
+	@Override
 	public String call() throws IOException {
 		if(target.canRead()) {
 			BufferedReader br = new BufferedReader(new FileReader(target));
