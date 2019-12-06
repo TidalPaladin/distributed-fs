@@ -50,10 +50,9 @@ public class Messenger {
 		Socket s = new Socket();
 		log.info("Connecting");
 		s.connect(postmarked.sendTo);
+		log.info("OIS");
 		log.info("OOS");
 		ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-		log.info("OIS");
-		ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 
 		log.info("WRITE");
 		oos.writeObject(postmarked);
@@ -61,6 +60,7 @@ public class Messenger {
 
 		// Get reply
 		log.info("Waiting for reply");
+		ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 
 		try {
 			Object replyObj = ois.readObject();
@@ -76,7 +76,6 @@ public class Messenger {
 		log.info("Receiving connection");
 		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 		Message msg = (Message) ois.readObject();
-		ois.close();
 		return msg;
 	}
 }
