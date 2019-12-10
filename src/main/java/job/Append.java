@@ -3,7 +3,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-class Append<T extends File> extends Job<Void> {
+class Append<T extends File> extends Job<T> {
 
 	public final T target;
 	public final String payload;
@@ -28,32 +28,30 @@ class Append<T extends File> extends Job<Void> {
 	}
 
 	@Override
-	public Void call() throws IOException{
-		try {
-			if(!target.canWrite()) {
-				throw new IOException("Failed to write to file");
-			}
+	public T call() throws IOException {
+		if(!target.canWrite()) {
+			throw new IOException("Failed to write to file");
+		}
 
-			if(target instanceof Chunk) {
-				ChunkWriter cw = new ChunkWriter((Chunk) target);
-				if(!cw.canWrite(payload)) {
-					throw new IOException("Chunk could not be written to");
-				}
-				if(payload == null) {
-					cw.pad();
-				} else {
-					cw.append(payload);
-				}
-				cw.close();
+		if(target instanceof Chunk) {
+			ChunkWriter cw = new ChunkWriter((Chunk) target);
+			if(!cw.canWrite(payload)) {
+				throw new IOException("Chunk could not be written to");
 			}
-			else {
-				BufferedWriter bw = new BufferedWriter(new FileWriter(target));
-				bw.append(payload);
-				bw.close();
+			if(payload == null) {
+				cw.pad();
+			} else {
+				cw.append(payload);
 			}
+			cw.flush();
+			cw.close();
 		}
-		finally {
-			return null;
+		else {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(target));
+			bw.append(payload);
+			bw.flush();
+			bw.close();
 		}
+		return target;
 	}
 }

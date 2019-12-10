@@ -16,66 +16,52 @@ public class Messenger {
 	}
 
 	public void send(Socket socket, Object msg) throws IOException {
-		log.info("Sending object " + msg);
-		ObjectOutputStream oos = null;
-		oos = new ObjectOutputStream(socket.getOutputStream());
+		log.debug("Sending object " + msg + " on " + socket);
+		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
 		oos.writeObject(msg);
 		oos.flush();
 	}
 
 	public void send(Socket socket, Message msg) throws IOException {
-		log.info("Sending message " + msg);
-		ObjectOutputStream oos = null;
 		Message postmarked = new Message(msg, returnAddr);
-		oos = new ObjectOutputStream(socket.getOutputStream());
-		oos.writeObject(postmarked);
-		oos.flush();
+		send(socket, (Object) postmarked);
 	}
 
 	public void send(Message msg) throws IOException {
-		Socket s = new Socket();
-		try {
+		try (
+			Socket s = new Socket();
+		) {
 			s.connect(msg.sendTo);
 			send(s, msg);
-		}
-		finally {
-			log.info("Closing socket");
 			s.close();
 		}
 	}
 
 	public <T> T send(Request<?, T> msg) throws IOException {
 		Request<?,T> postmarked = new Request<>(msg, returnAddr);
-		log.info("Sending request msg: " + postmarked);
-		Socket s = new Socket();
-		log.info("Connecting");
-		s.connect(postmarked.sendTo);
-		log.info("OIS");
-		log.info("OOS");
-		ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-
-		log.info("WRITE");
-		oos.writeObject(postmarked);
-		oos.flush();
-
-		// Get reply
-		log.info("Waiting for reply");
-		ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-
-		try {
-			Object replyObj = ois.readObject();
+		try (
+			Socket s = new Socket();
+		) {
+			s.connect(postmarked.sendTo);
+			send(s, postmarked);
+			Object replyObj = receiveObject(s);
 			return (T) replyObj;
+		}
+	}
+
+	public static Message receive(Socket socket) throws IOException {
+		return (Message) receiveObject(socket);
+	}
+
+	public static Object receiveObject(Socket socket) throws IOException {
+		log.debug("Receiving connection");
+		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+		try {
+			return ois.readObject();
 		}
 		catch(ClassNotFoundException ex) {
 			log.error(ex.getMessage(), ex);
 			return null;
 		}
-	}
-
-	public static Message receive(Socket socket) throws IOException, ClassNotFoundException {
-		log.info("Receiving connection");
-		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-		Message msg = (Message) ois.readObject();
-		return msg;
 	}
 }

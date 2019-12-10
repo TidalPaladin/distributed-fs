@@ -2,10 +2,12 @@ Messenger.class
 Locate.class
 Commit.class
 Abort.class
+ChunkWriter.class
 FileMeta.class
 Request.class
 Message.class
 Node.class
+Main.class
 Job.class
 Heartbeat.class
 Create.class

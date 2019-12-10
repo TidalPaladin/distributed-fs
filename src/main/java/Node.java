@@ -37,10 +37,10 @@ public abstract class Node implements Runnable {
 	protected class SocketThread implements Runnable {
 		@Override
 		public void run() {
+			log.info("Started listening for incomding connections");
 			while(!socket.isClosed()) {
-				Socket s = null;
 				try {
-					s = socket.accept();
+					Socket s = socket.accept();
 					log.debug("Accepted socket connection");
 					onMessage(s);
 					s.close();
@@ -49,6 +49,7 @@ public abstract class Node implements Runnable {
 					log.error(ex.getMessage(), ex);
 				}
 			}
+			log.debug("Stopped listening for incoming connections");
 		}
 	}
 
@@ -160,5 +161,9 @@ public abstract class Node implements Runnable {
 			log.error(ex.getMessage(), ex);
 		}
 		log.trace("Finished termination job");
+	}
+
+	public String toString() {
+		return String.format("%s(%s)", getClass().getName(), returnAddr);
 	}
 }

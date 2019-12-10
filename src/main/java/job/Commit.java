@@ -1,8 +1,8 @@
-class Commit extends Job<Void> {
+class Commit<T> extends Job<T> {
 
-	public final Job job;
+	public final Job<T> job;
 
-	public Commit(Job job) {
+	public Commit(Job<T> job) {
 		this.job = job;
 	}
 
@@ -17,13 +17,13 @@ class Commit extends Job<Void> {
 
 
 	@Override
-	public Void call() {
+	public T call() {
 		try {
-			job.call();
+			return job.call();
 		}
 		catch(Exception ex) {
 			ex.printStackTrace();
+			return null;
 		}
-		return null;
 	}
 }

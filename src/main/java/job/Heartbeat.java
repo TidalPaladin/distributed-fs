@@ -7,25 +7,25 @@ import java.net.MulticastSocket;
 import java.net.SocketAddress;
 import java.util.UUID;
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 
-class Heartbeat extends Job<Void> {
+class Heartbeat extends Job<ServerMeta> implements Serializable {
 	private static final Logger log = LogManager.getLogger("Heartbeat");
 
 	public final Set<Chunk> storedChunks;
 	public final InetSocketAddress source;
-	private Map<InetSocketAddress, ServerMeta> servers, deadServers;
+	private ConcurrentMap<InetSocketAddress, ServerMeta> servers, deadServers;
 
 	public Heartbeat(InetSocketAddress source, Set<Chunk> stored) {
-		this.storedChunks = stored;
+		this.storedChunks = new TreeSet<>(stored);
 		this.source = source;
 	}
 
-	public void setServerList(Map<InetSocketAddress, ServerMeta> meta){
+	public void setServerList(ConcurrentMap<InetSocketAddress, ServerMeta> meta){
 		this.servers = meta;
 	}
 
-	public void setDeadServerList(Map<InetSocketAddress, ServerMeta> meta){
+	public void setDeadServerList(ConcurrentMap<InetSocketAddress, ServerMeta> meta){
 		this.deadServers = meta;
 	}
 
@@ -35,7 +35,7 @@ class Heartbeat extends Job<Void> {
 	}
 
 	@Override
-	public Void call() {
+	public ServerMeta call() {
 		if(servers == null || deadServers == null) {
 			throw new IllegalStateException("must set server/dead server list");
 		}
@@ -55,8 +55,9 @@ class Heartbeat extends Job<Void> {
 		}
 		else if(deadServers.containsKey(source)) {
 			log.info("Beginning recovery of dead server");
-			servers.put(source, deadServers.get(source));
-			deadServers.remove(source);
+      ServerMeta meta = deadServers.remove(source);
+      servers.put(source, meta);
+      return meta;
 		}
 		else {
 			log.info("Registered new server " + source);
@@ -64,4 +65,5 @@ class Heartbeat extends Job<Void> {
 		}
 		return null;
 	}
+
 }

@@ -17,6 +17,7 @@ public class Chunk extends File {
 
 	public final File chunkOf;
 	public final int index;
+	private long size;
 
 	public Chunk(File chunkOf, String name, int index) {
 		super(name);
@@ -34,7 +35,11 @@ public class Chunk extends File {
 
 	@Override
 	public long length() {
-		return super.length() - padding;
+		return exists() ? super.length() - padding : size;
+	}
+
+	public void saveSize() {
+		this.size = length();
 	}
 
 
@@ -48,7 +53,7 @@ public class Chunk extends File {
 	 */
 	@Override
 	public long getFreeSpace() {
-		return SIZE - super.length();
+		return exists() ? SIZE - super.length() : SIZE - size;
 	}
 
 	@Override
@@ -67,22 +72,26 @@ public class Chunk extends File {
 	// Returns a trivial string representation of chunk and chunk file
 	@Override
 	public String toString() {
-		return String.format("Chunk(%s, %s)", chunkOf, getName());
+		return String.format("Chunk(of=%s, size=%d, index=%d, used/total=%d/%d)",
+				chunkOf,
+        size,
+				index,
+				length(),
+				super.length()
+		);
 	}
 
-	/*
 	// Compares chunks by comparing top level file name then chunk index
 	@Override
 	public int compareTo(File other) {
 		if(other instanceof Chunk) {
-			int chunkDiff = this.chunkOf.compareTo(other.chunkOf);
-			if(chunkDiff != 0 && ) {
+      Chunk o = (Chunk) other;
+			int chunkDiff = this.chunkOf.compareTo(o.chunkOf);
+			if(chunkDiff != 0) {
 				return chunkDiff;
 			}
-			return this.index - other.index;
+			return this.index - o.index;
 		}
-		return super.compareTo(other);
+    return super.compareTo(other);
 	}
-	*/
-
 }

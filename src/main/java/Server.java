@@ -25,7 +25,9 @@ public class Server extends Node {
 		while(!socket.isClosed()) {
 			try {
 				log.info("Sending heartbeat message");
-				Message<Heartbeat> msg = new Message(new Heartbeat(returnAddr, chunks), metaServer);
+				Heartbeat hb = new Heartbeat(returnAddr, chunks);
+        log.info(hb);
+				Message<Heartbeat> msg = new Message(hb, metaServer);
 				messenger.send(msg);
 				Thread.sleep(Metaserver.HEARTBEAT_FREQ * 1000);
 			}
@@ -42,8 +44,13 @@ public class Server extends Node {
 			log.info("Got message: " + j.toString());
 
 			if(j instanceof Commit) {
-				Commit job = (Commit) j;
-				job.call();
+				Commit commit = (Commit) j;
+				if(commit.job instanceof Append) {
+					Chunk chunk = (Chunk) commit.call();
+          chunk.saveSize();
+					chunks.remove(chunk);
+					chunks.add(chunk);
+				}
 			}
 			else if(j instanceof Create) {
 				Create job = (Create) j;

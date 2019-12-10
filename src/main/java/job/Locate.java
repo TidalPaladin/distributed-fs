@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.net.InetSocketAddress;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 
 class Locate extends Job<TreeMap<Chunk, ChunkMeta>> {
 
@@ -17,7 +17,7 @@ class Locate extends Job<TreeMap<Chunk, ChunkMeta>> {
 		this.target = target;
 	}
 
-	public void setMetadata(Map<Chunk, ChunkMeta>chunks, Map<File, FileMeta> files) {
+	public void setMetadata(ConcurrentMap<Chunk, ChunkMeta>chunks, Map<File, FileMeta> files) {
 		this.chunks = chunks;
 		this.files = files;
 	}

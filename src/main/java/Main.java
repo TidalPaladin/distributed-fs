@@ -11,40 +11,38 @@ public class Main {
 	public static void main(String[] args) {
 
 		try {
-			final int port = Integer.parseInt(System.getenv("PORT"));
-			final String hostname = System.getenv("HOSTNAME");
-			final InetSocketAddress host = new InetSocketAddress(hostname, port);
-			final String metahost = System.getenv("META");
-			final InetSocketAddress meta = new InetSocketAddress(metahost, port);
-			final int id = Integer.parseInt(System.getenv("ID"));
 			String mode = args[0];
 
-			log.info("Using metaserver: " + meta);
+			final InetSocketAddress host = new InetSocketAddress(
+				InetAddress.getLocalHost(),
+				Integer.parseInt(System.getenv("PORT"))
+			);
 
-			Thread t = null;
+			final InetSocketAddress meta = new InetSocketAddress(
+				System.getenv("META"),
+				Integer.parseInt(System.getenv("PORT"))
+			);
+
+			Node node = null;
 			if(mode.equalsIgnoreCase("client")) {
-				Client client = new Client(host, meta);
-				t = new Thread(client);
+				log.info("Using metaserver: " + meta);
+				node = new Client(host, meta);
 			}
 			else if(mode.equalsIgnoreCase("server")) {
-				Server server = new Server(host, meta);
-				t = new Thread(server);
+				log.info("Using metaserver: " + meta);
+				node = new Server(host, meta);
 			}
 			else if(mode.equalsIgnoreCase("meta")) {
-				Metaserver server = new Metaserver(host);
-				t = new Thread(server);
+				node = new Metaserver(host);
 			}
 
-			t.start();
-			t.join();
-		}
-		catch(UnknownHostException ex) {
-			log.error(ex.getMessage(), ex);
-		}
-		catch(InterruptedException | IOException ex) {
-			log.error(ex.getMessage(), ex);
-		}
+			log.info("Starting node: " + node);
+			node.run();
 
+		}
+		catch(Exception ex) {
+			log.error(ex.getMessage(), ex);
+		}
 		System.exit(0);
 	}
 }

@@ -1,52 +1,34 @@
 version: '3'
 
-networks:
-  aos_3:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.10.0.0/16
-
 services:
 
-  client1:
+  client:
     image: tidalpaladin/hw3
-    hostname: client_1
-    networks:
-      aos_3:
-        ipv4_address: 172.10.2.1
+    hostname: client
     depends_on:
-      - meta
+      - metaserver
+      - server
     tty: true
     stdin_open: true
     environment:
-      - ID=1
       - PORT=${PORT}
       - MODE=client
       - META=${META}
 
-  server1:
+  server:
     image: tidalpaladin/hw3
-    hostname: server_1
-    networks:
-      aos_3:
-        ipv4_address: 172.10.1.1
+    hostname: server
     depends_on:
-      - meta
+      - metaserver
     environment:
-      - ID=1
       - PORT=${PORT}
       - MODE=server
       - META=${META}
 
-  meta:
+  metaserver:
     image: tidalpaladin/hw3
-    hostname: meta
-    networks:
-      aos_3:
-        ipv4_address: ${META}
+    hostname: metaserver
     environment:
-      - ID=0
       - PORT=${PORT}
       - MODE=meta
       - META=${META}

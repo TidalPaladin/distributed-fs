@@ -35,4 +35,8 @@ public class FileMeta {
 	public long getNumChunks() {
 		return chunks.size();
 	}
+
+	public Chunk getLastChunk() {
+		return chunks.last();
+	}
 }

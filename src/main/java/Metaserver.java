@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class Metaserver extends Node {
 	protected static final Logger log = LogManager.getLogger("MetaServer");
@@ -17,17 +18,17 @@ public class Metaserver extends Node {
 
 
 	// Meta maps
-	private final Map<InetSocketAddress, ServerMeta> servers, deadServers;
-	private final Map<File, FileMeta> files;
-	private final Map<Chunk, ChunkMeta> chunks;
+	private final ConcurrentMap<InetSocketAddress, ServerMeta> servers, deadServers;
+	private final ConcurrentMap<File, FileMeta> files;
+	private final ConcurrentMap<Chunk, ChunkMeta> chunks;
 
 
 	public Metaserver(InetSocketAddress returnAddr) throws IOException {
 		super(returnAddr);
-		this.chunks = new TreeMap<Chunk, ChunkMeta>();
-		this.files = new TreeMap<File, FileMeta>();
-		servers = new HashMap<>();
-		deadServers = new HashMap<>();
+		this.chunks = new ConcurrentHashMap<Chunk, ChunkMeta>();
+		this.files = new ConcurrentHashMap<File, FileMeta>();
+		servers = new ConcurrentHashMap<>();
+		deadServers = new ConcurrentHashMap<>();
 	}
 
 	@Override
@@ -42,6 +43,7 @@ public class Metaserver extends Node {
 					deadServers.put(addr, server);
 					servers.remove(addr);
 					log.info("Moved  " + addr + " to dead server list");
+          markUnavailable(deadServers.get(addr));
 				}
 			}
 			try {
@@ -74,21 +76,28 @@ public class Metaserver extends Node {
 			}
 			else if(j instanceof Append) {
 				Append job = (Append) j;
-				if(!canAppend(job.target)) {
+				if(!available(job.target)) {
 					log.info("Cannot run job " + job);
 					messenger.send(s, new TreeMap<>());
+          return;
 				}
-				else {
-					log.info("Sending locations for append request");
-					Locate locate = new Locate(job.target);
-					messenger.send(s, locate(locate));
-				}
+        if(!canAppend(job)) {
+					log.info("Creating additional chunk for file");
+					createNext(job.target);
+        }
+        log.info("Sending locations for append request");
+        Locate locate = new Locate(job.target);
+        messenger.send(s, locate(locate));
 			}
 			else if(j instanceof Heartbeat) {
 				Heartbeat job = (Heartbeat) j;
 				job.setServerList(servers);
 				job.setDeadServerList(deadServers);
-				job.call();
+				ServerMeta nowAvailable = job.call();
+        if(nowAvailable != null) {
+					log.info("Marking chunks available");
+          markAvailable(nowAvailable);
+        }
 			}
 			else if(j instanceof Read) {
 				Read job = (Read) j;
@@ -104,7 +113,7 @@ public class Metaserver extends Node {
 			}
 
 		}
-		catch(IOException | ClassNotFoundException ex) {
+		catch(IOException ex) {
 			log.error(ex.getMessage(), ex);
 		}
 	}
@@ -142,15 +151,37 @@ public class Metaserver extends Node {
 		create(nextChunk);
 	}
 
+	private void createNext(File file) {
+    FileMeta fileMeta = files.get(file);
+    Chunk prevChunk = fileMeta.getLastChunk();
+		createNext(prevChunk);
+	}
 
-	private boolean canAppend(File file) {
+	private boolean available(File file) {
 		Locate locate = new Locate(file);
 		TreeMap<Chunk, ChunkMeta> chunkMeta = locate(locate);
 		Chunk lastChunk = chunkMeta.lastKey();
 		return chunkMeta.get(lastChunk).isAvailable();
 	}
 
+	private boolean canAppend(Append job) {
+		Locate locate = new Locate(job.target);
+		TreeMap<Chunk, ChunkMeta> chunkMeta = locate(locate);
+		Chunk lastChunk = chunkMeta.lastKey();
+		ChunkMeta lastMeta = chunks.get(lastChunk);
+    if(lastChunk.getFreeSpace() < job.payload.length()) {
+      return false;
+    }
+    else if(!lastMeta.isAvailable()) {
+      return false;
+    }
+		return true;
+	}
+
 	private boolean canRead(File file) {
+    if(!files.containsKey(file)) {
+      return false;
+    }
 		Locate locate = new Locate(file);
 		TreeMap<Chunk, ChunkMeta> chunkMeta = locate(locate);
 		for(ChunkMeta cm : chunkMeta.values()) {
@@ -210,4 +241,28 @@ public class Metaserver extends Node {
 		}
 		return group;
 	}
+
+  private void markUnavailable(ServerMeta serverMeta) {
+    for(File file : files.keySet()) {
+      FileMeta fileMeta = files.get(file);
+      for(Chunk chunk : chunks.keySet()) {
+        ChunkMeta chunkMeta = chunks.get(chunk);
+        if(serverMeta.hasChunk(chunk)) {
+          chunkMeta.markUnavailable();
+        }
+      }
+    }
+  }
+
+  private void markAvailable(ServerMeta serverMeta) {
+    for(File file : files.keySet()) {
+      FileMeta fileMeta = files.get(file);
+      for(Chunk chunk : chunks.keySet()) {
+        ChunkMeta chunkMeta = chunks.get(chunk);
+        if(serverMeta.hasChunk(chunk)) {
+          chunkMeta.markAvailable();
+        }
+      }
+    }
+  }
 }
