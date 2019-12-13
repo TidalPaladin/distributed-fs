@@ -2,81 +2,102 @@ import org.apache.logging.log4j.*;
 import java.net.*;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-public class Server extends AbstractImpl {
-	private static final Logger log = LogManager.getLogger("Server");
+public class Server extends Node {
+	protected static final Logger log = LogManager.getLogger("Server");
 
-	private static final BlockingQueue<Request> requests = new PriorityBlockingQueue<>();
-	private static final BlockingQueue<Release> releases = new SynchronousQueue<>();
+	protected InetSocketAddress metaServer;
+	private final Set<Chunk> chunks;
 
-
-	/**
-		* Constructs a server identified by a given integer id. A server
-		* will respond to the highest priority request received from any
-		* client, and will become locked until the GRANTed client responds
-		* with a RELEASE. For file server functionality (S0), see the
-		* FileServer class.
-		*
-		* @param id	Unique positive integer identifying the client
-		*
-		* @throws IOException	If local socket could not be opened
-		*/
-	public Server(int id) throws IOException{
-		super(id);
+	public Server(InetSocketAddress returnAddr, InetSocketAddress metaServer) throws IOException {
+		super(returnAddr);
+		this.metaServer = metaServer;
+		this.chunks = new TreeSet<Chunk>();
 	}
 
-	// Grant the highest priority request and wait for release
 	@Override
-	public void consumer() {
+	public void run() {
+		super.run();
 		while(!socket.isClosed()) {
 			try {
-				/* Send grant to highest priority request */
-				Request r = requests.take();
-				Grant grant = new Grant(id, r.origin, System.nanoTime());
-				String host = clients[grant.dest-1];
-				log.info("Sending grant to " + host);
-				send(grant, host);
-
-				/* Wait for release */
-				releases.take();
-				log.info("Got release from " + host);
+				log.info("Sending heartbeat message");
+				Heartbeat hb = new Heartbeat(returnAddr, chunks);
+        log.info(hb);
+				Message<Heartbeat> msg = new Message(hb, metaServer);
+				messenger.send(msg);
+				Thread.sleep(Metaserver.HEARTBEAT_FREQ * 1000);
 			}
-			catch(IOException ex) {
+			catch(Exception ex) {
 				log.error(ex.getMessage(), ex);
 			}
-			catch(InterruptedException ex) {
-				// Will be interrupted when time to terminate
-				return;
+		}
+	}
+
+	public void onMessage(Socket s) {
+		try {
+			Message msg = messenger.receive(s);
+			Job j = msg.job;
+			log.info("Got message: " + j.toString());
+
+			if(j instanceof Commit) {
+				Commit commit = (Commit) j;
+				if(commit.job instanceof Append) {
+					Chunk chunk = (Chunk) commit.call();
+          chunk.saveSize();
+					chunks.remove(chunk);
+					chunks.add(chunk);
+				}
+			}
+			else if(j instanceof Create) {
+				Create job = (Create) j;
+				job.call();
+				chunks.add((Chunk) job.target);
+			}
+			else if(j instanceof Replicate) {
+				Replicate job = (Replicate) j;
+				job.setMessenger(messenger);
+				job.call();
+			}
+			else if(j instanceof Read) {
+				Read job = (Read) j;
+				String payload = job.call();
+				messenger.send(s, payload);
+			}
+			else if(j instanceof Append) {
+				Append job = (Append) j;
+				Chunk chunk = (Chunk) job.target;
+				String payload = job.payload;
+
+				ChunkWriter cw = new ChunkWriter(chunk);
+				if(cw.canWrite(payload)) {
+					Job reply = new Commit(job);
+					messenger.send(s, reply);
+				}
+				else {
+					Job reply = new Abort(job);
+					messenger.send(s, reply);
+				}
 			}
 		}
-	}
-
-	// Put requests into priority queue
-	public void onRequest(Request msg){
-		log.trace("Got request message from " + msg.origin);
-		boolean ok = false;
-		while(!ok) {
-			ok = requests.offer(msg);
+		catch(Exception ex) {
+			log.error(ex.getMessage(), ex);
 		}
+
 	}
 
-	// Alert consumer upon receiving RELEASE from GRANTed client
-	public void onRelease(Release msg){
-		log.trace("Got release message from " + msg.origin);
-		boolean ok = false;
-		while(!ok) {
-			ok = releases.offer(msg);
-		}
+	public String read(File file) throws IOException, InterruptedException {
+		return read(file, metaServer);
 	}
 
-	// Dummy abstract implementation, server should not get GRANTs
-	public void onGrant(Grant msg){
-		log.warn("Got grant message, nothing to do");
+	public boolean append(File file, String payload) throws IOException, InterruptedException {
+		return append(file, payload, metaServer);
 	}
 
-	public void onSatisfied(Satisfied msg){
-		log.trace("Got satisfied message, terminating...");
-		terminate();
+	public TreeMap<Chunk, ChunkMeta> locate(File file) throws IOException, InterruptedException {
+		return locate(file, metaServer);
 	}
 }
